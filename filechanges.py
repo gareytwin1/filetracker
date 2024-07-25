@@ -63,6 +63,7 @@ def createhashtable():
                 cursor = conn.cursor()
                 cursor.execute(query)
                 conn.commit()
+                conn.close()
                 result = True
             else:
                 cursor.close()
