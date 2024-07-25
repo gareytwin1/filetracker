@@ -11,7 +11,7 @@ def connectdb():
         db_file = getbasefile() + '.db'
         conn = sqlite3.connect(db_file)
     except BaseException as err:
-        print(f"Error: {err}")
+        print(f"Error connecting to database: {err}")
         conn = None
     return conn
 
