@@ -47,7 +47,7 @@ def table_exists(table):
            result = corecursor(conn, query, args)
            conn.close()
     except sqlite3.Error as err:
-       print("Error connecting to database: {err}")
+       print(f"Error connecting to database: {err}")
        conn.close()
     return result
 
