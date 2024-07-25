@@ -7,8 +7,9 @@ def connect_db():
 
 def corecursor(conn, query, args):
     cursor = conn.cursor()
-    cursor.execute(query, args)
-    return cursor.fetchone()
+    result = cursor.execute(query, args)
+    return result.fetchone()
+
 
 def table_exists(conn, table_name):
     """Checks if a SQLite DB Table exists"""
@@ -28,17 +29,20 @@ def table_exists(conn, table_name):
     except sqlite3.Error as e:
        print("Error connecting to database: {e}")
 
-connection = connect_db()
-
-if connection:
-    table_name = 'files'
-    if table_exists(connection, table_name):
-        print(f"Table {table_name} already exists")
+def main():
+    connection = connect_db()
+    if connection:
+        table_name = 'files'
+        if table_exists(connection, table_name):
+            print(f"Table {table_name} already exists")
+        else:
+            print(f"Table {table_name} does not exists.")
+            connection.close()
     else:
-        print(f"Table {table_name} does not exists.")
-        connection.close()
-else:
-    print("Failed to establish connection")
+        print("Failed to establish connection")
+
+if __name__ == "__main__":
+    main()
 
 
 
