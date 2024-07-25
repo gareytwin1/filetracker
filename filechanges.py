@@ -1,49 +1,67 @@
+import os
 import sqlite3
 
+def getbasefile():
+    """Name of the SQLite DB file"""
+    return os.path.splitext(os.path.basename(__file__))[0]
 
-def connect_db():
-    conn = sqlite3.connect("datafile.db")
+def connectdb():
+    """Connect to the SQLite DB"""
+    try:
+        db_file = getbasefile() + '.db'
+        conn = sqlite3.connect(db_file)
+    except BaseException as err:
+        print(f"Error: {err}")
+        conn = None
     return conn
 
 def corecursor(conn, query, args):
+    """Opens a SQLite DB cursor"""
+    result = False
     cursor = conn.cursor()
-    result = cursor.execute(query, args)
-    return result.fetchone()
+    try:
+        cursor.execute(query, args)
+        rows = cursor.fetchall()
+        numrows = len(list(rows))
+        if numrows > 0:
+            result = True
+    except sqlite3.Error as err:
+        print(f"Error establishing cursor:{err}")
+        if cursor != None:
+            cursor.close()
+    return result
 
 
-def table_exists(conn, table_name):
+def table_exists(table):
     """Checks if a SQLite DB Table exists"""
     result = False
     try:
-        conn = connect_db()
+        conn = connectdb()
         if not conn is None:
            # cursor = conn.cursor()
-           query = f"""
+           query = """
            SELECT name
            FROM sqlite_master
            WHERE type='table' AND name=?
            """
-           args = (table_name,)
+           args = (table,)
            result = corecursor(conn, query, args)
-           return result is not None
+           conn.close()
     except sqlite3.Error as e:
        print("Error connecting to database: {e}")
+       conn.close()
+    return result
 
 def main():
-    connection = connect_db()
-    if connection:
-        table_name = 'files'
-        if table_exists(connection, table_name):
-            print(f"Table {table_name} already exists")
-        else:
-            print(f"Table {table_name} does not exists.")
-            connection.close()
+    if table_exists("files"):
+        print(f"Table already exists")
     else:
-        print("Failed to establish connection")
+        print(f"Table does not exists.")
+    
 
 if __name__ == "__main__":
     main()
-
+    
 
 
 
