@@ -28,7 +28,7 @@ def corecursor(conn, query, args):
     except sqlite3.Error as err:
         print(f"Error establishing cursor:{err}")
         if cursor != None:
-            cursor.close()
+            conn.close()
     return result
 
 
@@ -38,7 +38,6 @@ def table_exists(table):
     try:
         conn = connectdb()
         if not conn is None:
-           # cursor = conn.cursor()
            query = """
            SELECT name
            FROM sqlite_master
@@ -47,8 +46,8 @@ def table_exists(table):
            args = (table,)
            result = corecursor(conn, query, args)
            conn.close()
-    except sqlite3.Error as e:
-       print("Error connecting to database: {e}")
+    except sqlite3.Error as err:
+       print("Error connecting to database: {err}")
        conn.close()
     return result
 
