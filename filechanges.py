@@ -31,7 +31,6 @@ def corecursor(conn, query, args):
             conn.close()
     return result
 
-
 def table_exists(table):
     """Checks if a SQLite DB Table exists"""
     result = False
@@ -51,6 +50,28 @@ def table_exists(table):
        conn.close()
     return result
 
+def createhashtable():
+    result = False
+    query = """CREATE TABLE IF NOT EXISTS files (
+             id Integer PRIMARY KEY,
+             file_name text NOT NULL,
+             hash_value text NOT NULL)"""
+    try:
+        conn = connectdb()
+        if not conn is None:
+            if not table_exists('files'):
+                cursor = conn.cursor()
+                cursor.execute(query)
+                conn.commit()
+                result = True
+            else:
+                cursor.close()
+                conn.close()
+    except sqlite3.Error as err:
+        print(f"Error creating table: {err}")
+    return result
+
+        
 def main():
     if table_exists("files"):
         print(f"Table already exists")
