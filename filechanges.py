@@ -119,7 +119,49 @@ def runcmd(qry, table):
     finally:
         if conn:
             conn.close()
-            
+
+"""Update the SQLite File Table"""
+def update_hash_table(fname, md5, table='files'):
+    qry = f"UPDATE {table} ..."
+    runcmd(qry, table)
+
+"""Insert into the SQLite Files Table"""
+def insert_hash_table(fname, md5, table='files'):
+    # Call the Create the hash table function...
+    # Call the Create the index on the has table function
+    runcmd(qry, table)
+
+"""Setup the Hash Table"""
+def setup_hash_table(fname, md5, table='files'):
+    # Call the Create the hash table function...
+    # Call the Create the index on the hash table function...
+    insert_hash_table(fname, md5, table)
+
+"""Checks if the md5 has tag exists in the SQLite DB"""
+def md5indb(fname, table='files'):
+    items = []
+    qry = "SELECT ..." # Finish this query statement
+    try:
+        conn = connectdb()
+        if not conn is None:
+            if table_exists(table):
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute(qry)
+                    # To be continued ...
+                except sqlite3.Error as e:
+                    print(f"Error finding md5 hash: {e}")
+            else:
+                print(f"{table} doesn't exists. Can't find md5 hash.")
+        else:
+            print(f"Can't connect to database to find md5 hash")
+    except sqlite3.Error as e:
+        print(f"Error finding md5 hash: {e}")
+    finally:
+        if conn:
+            conn.close()
+    return items
+
 def print_all_tables():
     try:
         conn = connectdb()
@@ -168,6 +210,9 @@ def main():
     create_hash_table_idx()
     print_all_tables()
     print_table_columns(table)
+
+
+
 
 if __name__ == "__main__":
     main()
