@@ -27,8 +27,9 @@ def corecursor(conn, query, args):
             result = True
     except sqlite3.Error as e:
         print(f"Error establishing cursor:{e}")
-        if cursor != None:
-            conn.close()
+    finally:    
+        if cursor:
+            cursor.close()
     return result
 
 def table_exists(table):
@@ -44,10 +45,11 @@ def table_exists(table):
            """
            args = (table,)
            result = corecursor(conn, query, args)
-           conn.close()
     except sqlite3.Error as e:
        print(f"Error connecting to database: {e}")
-       conn.close()
+    finally:
+        if conn:
+            conn.close()
     return result
 
 def create_hash_table(table):
@@ -64,13 +66,12 @@ def create_hash_table(table):
                 cursor = conn.cursor()
                 cursor.execute(query)
                 conn.commit()
-                conn.close()
                 result = True
-            else:
-                # cursor.close()
-                conn.close()
     except sqlite3.Error as e:
         print(f"Error creating table: {e}")
+    finally:
+        if conn:
+            conn.close()
     return result
 
 def create_hash_table_idx():
@@ -85,17 +86,36 @@ def create_hash_table_idx():
                     cursor = conn.cursor()
                     cursor.execute(query)
                     conn.commit()
-                    cursor.close()
                     print(f"Index '{index_name}' created successfully.")
-                    return True
                 except sqlite3.Error as err:
                     print(f"Error creating index: {err}")
             else:
                 print(f"Index '{index_name}' already exists.")
         else:
             print(f"Table '{table}' does not exist.")
-    except sqlite3.Error as err:
-        print(f"Error: {err}")
+    except sqlite3.Error as e:
+        print(f"Error: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+"""Run a specific command on the SQLite DB"""
+def runcmd(qry, table):
+    try:
+        conn = connectdb()
+        if not conn is None:
+            if table_exists(table):
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute(qry)
+                except sqlite3.Error as e:
+                    print(f"Error running query: {e}")
+            else:
+                print(f"{table} table does not exists.")
+        else:
+            print(f"Could not find {table} run query")
+    except sqlite3.Error as e:
+        print(f"Error running query: {e}")
     finally:
         if conn:
             conn.close()
@@ -116,7 +136,8 @@ def print_all_tables():
     except sqlite3.Error as e:
         print(f"Error retrieving tables: {e}")
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 def print_table_columns(table):
     try:
@@ -131,10 +152,11 @@ def print_table_columns(table):
                     print(f"Column ID: {column[0]}, Name: {column[1]}, Type: {column[2]}")
             else:
                 print(f"No columns found for table '{table}'.")
-            cursor.close()
-        conn.close()
     except sqlite3.Error as e:
         print(f"Error retrieving columns: {e}")
+    finally:
+        if conn:
+            conn.close()
 
 def main():
     table = 'files'
@@ -146,8 +168,6 @@ def main():
     create_hash_table_idx()
     print_all_tables()
     print_table_columns(table)
-    
-    
 
 if __name__ == "__main__":
     main()
