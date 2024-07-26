@@ -10,8 +10,8 @@ def connectdb():
     try:
         db_file = getbasefile() + '.db'
         conn = sqlite3.connect(db_file)
-    except BaseException as err:
-        print(f"Error connecting to database: {err}")
+    except BaseException as e:
+        print(f"Error connecting to database: {e}")
         conn = None
     return conn
 
@@ -25,8 +25,8 @@ def corecursor(conn, query, args):
         numrows = len(list(rows))
         if numrows > 0:
             result = True
-    except sqlite3.Error as err:
-        print(f"Error establishing cursor:{err}")
+    except sqlite3.Error as e:
+        print(f"Error establishing cursor:{e}")
         if cursor != None:
             conn.close()
     return result
@@ -45,28 +45,30 @@ def table_exists(table):
            args = (table,)
            result = corecursor(conn, query, args)
            conn.close()
-    except sqlite3.Error as err:
-       print(f"Error connecting to database: {err}")
+    except sqlite3.Error as e:
+       print(f"Error connecting to database: {e}")
        conn.close()
     return result
 
-def createhashtable():
+def createhashtable(table):
     result = False
-    query = """CREATE TABLE IF NOT EXISTS files (
+    query = f"""CREATE TABLE IF NOT EXISTS {table} (
              id Integer PRIMARY KEY,
              file_name text NOT NULL,
              hash_value text NOT NULL)"""
     try:
         conn = connectdb()
         if not conn is None:
-            if not table_exists('files'):
+            if not table_exists(table):
                 cursor = conn.cursor()
                 cursor.execute(query)
                 conn.commit()
+                print(f"{table} table created in database!")
                 conn.close()
                 result = True
             else:
-                cursor.close()
+                # cursor.close()
+                print(f"{table} table already in database.")
                 conn.close()
     except sqlite3.Error as err:
         print(f"Error creating table: {err}")
@@ -74,10 +76,8 @@ def createhashtable():
 
         
 def main():
-    if table_exists("files"):
-        print(f"Table already exists")
-    else:
-        print(f"Table does not exists.")
+    createhashtable("files")
+    
     
 
 if __name__ == "__main__":
