@@ -50,7 +50,7 @@ def table_exists(table):
        conn.close()
     return result
 
-def createhashtable(table):
+def create_hash_table(table):
     result = False
     query = f"""CREATE TABLE IF NOT EXISTS {table} (
              id Integer PRIMARY KEY,
@@ -63,20 +63,42 @@ def createhashtable(table):
                 cursor = conn.cursor()
                 cursor.execute(query)
                 conn.commit()
-                print(f"{table} table created in database!")
                 conn.close()
                 result = True
             else:
                 # cursor.close()
-                print(f"{table} table already in database.")
                 conn.close()
-    except sqlite3.Error as err:
-        print(f"Error creating table: {err}")
+    except sqlite3.Error as e:
+        print(f"Error creating table: {e}")
     return result
 
-        
+def print_all_tables():
+    try:
+        conn = connectdb()
+        if not conn is None:
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            tables = cursor.fetchall()
+            if tables:
+                print("Tables in the database:")
+                for table in tables:
+                    print(table[0])
+            else:
+                print("No tables found in the database.")
+    except sqlite3.Error as e:
+        print(f"Error retrieving tables: {e}")
+    finally:
+        conn.close()
+
 def main():
-    createhashtable("files")
+    table = 'files'
+    if create_hash_table(table):
+        print(f"{table} table created in database!")
+    else:
+        print(f"{table} table already in database.")
+
+    print_all_tables()
+
     
     
 
