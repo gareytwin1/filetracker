@@ -55,7 +55,8 @@ def create_hash_table(table):
     query = f"""CREATE TABLE IF NOT EXISTS {table} (
              id Integer PRIMARY KEY,
              file_name text NOT NULL,
-             hash_value text NOT NULL)"""
+             hash_value text NOT NULL,
+             file_size Integer NOT NULL)"""
     try:
         conn = connectdb()
         if not conn is None:
@@ -72,6 +73,33 @@ def create_hash_table(table):
         print(f"Error creating table: {e}")
     return result
 
+def create_hash_table_idx():
+    table = 'files'
+    index_name = 'idxfile'
+    query = f'CREATE INDEX IF NOT EXISTS {index_name} ON {table} (file_name)'
+    try:    
+        conn = connectdb()
+        if conn is not None:
+            if table_exists(table):
+                try:
+                    cursor = conn.cursor()
+                    cursor.execute(query)
+                    conn.commit()
+                    cursor.close()
+                    print(f"Index '{index_name}' created successfully.")
+                    return True
+                except sqlite3.Error as err:
+                    print(f"Error creating index: {err}")
+            else:
+                print(f"Index '{index_name}' already exists.")
+        else:
+            print(f"Table '{table}' does not exist.")
+    except sqlite3.Error as err:
+        print(f"Error: {err}")
+    finally:
+        if conn:
+            conn.close()
+            
 def print_all_tables():
     try:
         conn = connectdb()
@@ -90,6 +118,24 @@ def print_all_tables():
     finally:
         conn.close()
 
+def print_table_columns(table):
+    try:
+        conn = connectdb()
+        if conn is not None:
+            cursor = conn.cursor()
+            cursor.execute(f"PRAGMA table_info({table});")
+            columns = cursor.fetchall()
+            if columns:
+                print(f"Columns in the '{table}' table:")
+                for column in columns:
+                    print(f"Column ID: {column[0]}, Name: {column[1]}, Type: {column[2]}")
+            else:
+                print(f"No columns found for table '{table}'.")
+            cursor.close()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"Error retrieving columns: {e}")
+
 def main():
     table = 'files'
     if create_hash_table(table):
@@ -97,8 +143,9 @@ def main():
     else:
         print(f"{table} table already in database.")
 
+    create_hash_table_idx()
     print_all_tables()
-
+    print_table_columns(table)
     
     
 
