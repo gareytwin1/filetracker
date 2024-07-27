@@ -1,3 +1,4 @@
+import hashlib
 import os
 import sqlite3
 
@@ -193,6 +194,40 @@ def print_table_columns(table='files'):
         if conn:
             conn.close()
 
+def haschanged(fname, md5):
+    """Check if the file has changed"""
+    result = False
+    items = md5indb(fname)
+    if items:
+        if md5 == items[0]:
+            result = False
+        else:
+            result = True
+    return result
+
+def getfileext(fname):
+    """Get the file extension"""
+    return os.path.splitext(fname)[1]
+
+def getmoddate(fname):
+    """Get the file modification date"""
+    try:
+        return os.path.getmtime(fname)
+    except OSError as e:
+        print(f"Error getting file modification date: {e}")
+        return None
+
+def md5short(fname):
+    """Get md5 file hash tag using the hashlib.md5 function
+       UTF-8 encoding must be used to encode the file data"""
+    try:
+        with open(fname, 'rb') as f:
+            data = f.read()
+            return hashlib.md5(data).hexdigest()
+    except OSError as e:
+        print(f"Error getting md5 hash tag: {e}")
+        return None
+    
 def main():
     """Testing the functions created"""
     table = 'files'
@@ -204,6 +239,7 @@ def main():
     create_hash_table_idx()
     print_all_tables()
     print_table_columns()
+    print(md5short('filechanges.py'))
 
 if __name__ == "__main__":
     main()
