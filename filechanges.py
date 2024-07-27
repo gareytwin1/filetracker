@@ -197,12 +197,14 @@ def print_table_columns(table='files'):
 def haschanged(fname, md5):
     """Check if the file has changed"""
     result = False
-    items = md5indb(fname)
-    if items:
-        if md5 == items[0]:
-            result = False
-        else:
+    old_md5 = md5indb(fname)
+    numitems = len(old_md5)
+    if numitems > 0:
+        if md5 != old_md5[0]:
             result = True
+            update_hash_table(fname, md5)
+    else:
+        insert_hash_table(fname, md5)
     return result
 
 def getfileext(fname):
@@ -220,13 +222,7 @@ def getmoddate(fname):
 def md5short(fname):
     """Get md5 file hash tag using the hashlib.md5 function
        UTF-8 encoding must be used to encode the file data"""
-    try:
-        with open(fname, 'rb') as f:
-            data = f.read()
-            return hashlib.md5(data).hexdigest()
-    except OSError as e:
-        print(f"Error getting md5 hash tag: {e}")
-        return None
+    return hashlib.md5(str(fname + '|' + str(getmoddate(fname))).encode('utf-8')).hexdigest()
     
 def main():
     """Testing the functions created"""
