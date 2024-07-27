@@ -10,7 +10,7 @@ def connectdb():
     try:
         db_file = getbasefile() + '.db'
         conn = sqlite3.connect(db_file)
-    except BaseException as e:
+    except sqlite3.Error as e:
         print(f"Error connecting to database: {e}")
         conn = None
     return conn
@@ -37,16 +37,16 @@ def table_exists(table):
     result = False
     try:
         conn = connectdb()
-        if not conn is None:
-           query = """
-           SELECT name
-           FROM sqlite_master
-           WHERE type='table' AND name=?
-           """
-           args = (table,)
-           result = corecursor(conn, query, args)
+        if conn is not None:
+            query = """
+            SELECT name
+            FROM sqlite_master
+            WHERE type='table' AND name=?
+            """
+            args = (table,)
+            result = corecursor(conn, query, args)
     except sqlite3.Error as e:
-       print(f"Error connecting to database: {e}")
+        print(f"Error connecting to database: {e}")
     finally:
         if conn:
             conn.close()
@@ -57,8 +57,7 @@ def create_hash_table(table):
     query = f"""CREATE TABLE IF NOT EXISTS {table} (
              id Integer PRIMARY KEY,
              file_name text NOT NULL,
-             hash_value text NOT NULL,
-             file_size Integer NOT NULL)"""
+             hash_value text NOT NULL)"""
     try:
         conn = connectdb()
         if not conn is None:
@@ -68,15 +67,13 @@ def create_hash_table(table):
                 conn.commit()
                 result = True
     except sqlite3.Error as e:
-        print(f"Error creating table: {e}")
+        print(f"Error creating hash table: {e}")
     finally:
         if conn:
             conn.close()
     return result
 
-def create_hash_table_idx():
-    table = 'files'
-    index_name = 'idxfile'
+def create_hash_table_idx(table='files', index_name='idxfile'):
     query = f'CREATE INDEX IF NOT EXISTS {index_name} ON {table} (file_name)'
     try:    
         conn = connectdb()
@@ -86,15 +83,10 @@ def create_hash_table_idx():
                     cursor = conn.cursor()
                     cursor.execute(query)
                     conn.commit()
-                    print(f"Index '{index_name}' created successfully.")
-                except sqlite3.Error as err:
-                    print(f"Error creating index: {err}")
-            else:
-                print(f"Index '{index_name}' already exists.")
-        else:
-            print(f"Table '{table}' does not exist.")
+                except sqlite3.Error as e:
+                    print(f"Error creating hash table index: {e}")
     except sqlite3.Error as e:
-        print(f"Error: {e}")
+        print(f"Error creating hash table index: {e}")
     finally:
         if conn:
             conn.close()
@@ -108,12 +100,9 @@ def runcmd(qry, table):
                 try:
                     cursor = conn.cursor()
                     cursor.execute(qry)
+                    conn.commit()
                 except sqlite3.Error as e:
                     print(f"Error running query: {e}")
-            else:
-                print(f"{table} table does not exists.")
-        else:
-            print(f"Could not find {table} run query")
     except sqlite3.Error as e:
         print(f"Error running query: {e}")
     finally:
@@ -122,41 +111,42 @@ def runcmd(qry, table):
 
 """Update the SQLite File Table"""
 def update_hash_table(fname, md5, table='files'):
-    qry = f"UPDATE {table} ..."
+    qry = f"UPDATE {table} SET hash_value = ? WHERE file_name = ?"
+    args = (md5, fname)
     runcmd(qry, table)
 
 """Insert into the SQLite Files Table"""
 def insert_hash_table(fname, md5, table='files'):
-    # Call the Create the hash table function...
-    # Call the Create the index on the has table function
+    qry = f"INSERT INTO {table} (file_name, hash_value) VALUES (?, ?)"
+    args = (fname, md5)
     runcmd(qry, table)
 
 """Setup the Hash Table"""
 def setup_hash_table(fname, md5, table='files'):
-    # Call the Create the hash table function...
-    # Call the Create the index on the hash table function...
+    create_hash_table(table)
+    create_hash_table_idx(table)
     insert_hash_table(fname, md5, table)
 
 """Checks if the md5 has tag exists in the SQLite DB"""
 def md5indb(fname, table='files'):
     items = []
-    qry = "SELECT ..." # Finish this query statement
+    qry = "SELECT hash_value FROM {table} WHERE file_name = ?"
+    args = (fname,)
     try:
         conn = connectdb()
         if not conn is None:
             if table_exists(table):
                 try:
                     cursor = conn.cursor()
-                    cursor.execute(qry)
-                    # To be continued ...
+                    cursor.execute(qry, args)
+                    items = cursor.fetchall()
+                    for item in items:
+                        if item[0] is not None:
+                            items.append(item[0])
                 except sqlite3.Error as e:
-                    print(f"Error finding md5 hash: {e}")
-            else:
-                print(f"{table} doesn't exists. Can't find md5 hash.")
-        else:
-            print(f"Can't connect to database to find md5 hash")
+                    print(f"Error executing query finding md5 hash: {e}")
     except sqlite3.Error as e:
-        print(f"Error finding md5 hash: {e}")
+        print(f"Error executing query md5 hash: {e}")
     finally:
         if conn:
             conn.close()
@@ -167,7 +157,7 @@ def print_all_tables():
         conn = connectdb()
         if not conn is None:
             cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
             tables = cursor.fetchall()
             if tables:
                 print("Tables in the database:")
@@ -210,9 +200,6 @@ def main():
     create_hash_table_idx()
     print_all_tables()
     print_table_columns(table)
-
-
-
 
 if __name__ == "__main__":
     main()
