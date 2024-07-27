@@ -204,7 +204,7 @@ def haschanged(fname, md5):
             result = True
             update_hash_table(fname, md5)
     else:
-        insert_hash_table(fname, md5)
+        setup_hash_table(fname, md5)
     return result
 
 def getfileext(fname):
