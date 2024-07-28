@@ -1,5 +1,6 @@
-import hashlib
 import os
+import sys
+import hashlib
 import sqlite3
 
 def getbasefile():
@@ -223,7 +224,41 @@ def md5short(fname):
     """Get md5 file hash tag using the hashlib.md5 function
        UTF-8 encoding must be used to encode the file data"""
     return hashlib.md5(str(fname + '|' + str(getmoddate(fname))).encode('utf-8')).hexdigest()
+
+def runfilechages(ws): # ws is the worksheet??
+    # Invoke the function that loads and parses the config file
+    flds, exts = loadflds()
+    for i, fld in enumerate(flds):
+        changed = checkfilechanges(fld, exts, ws)
+    return changed
+
     
+def loadflds():
+    # Load the fields from the config file
+    flds = []
+    exts = []
+    config =  getbasefile() + '.ini'
+    if os.path.isfile(config):
+        with open(config, 'r') as f:
+            for line in f:
+                flds.append(line.split('|')[0].strip())
+                exts.append(line.split('|')[1].strip()) # need to strip the commas, not correct
+    return flds, exts
+
+def checkfilechanges(folder, exclude, ws):
+    changed = False
+    """Check for file changes"""
+    for subdir, dirs, files in os.walk(folder):
+        for fname in files:
+            if fname not in exclude:
+                fname = os.path.join(subdir, fname)
+                if os.path.isfile(fname):
+                    md5 = md5short(fname)
+                    if haschanged(fname, md5):
+                        print(f"File {fname} has changed!") # -> Log the file change to Excel report
+                        changed = True
+    return changed
+
 def main():
     """Testing the functions created"""
     table = 'files'
